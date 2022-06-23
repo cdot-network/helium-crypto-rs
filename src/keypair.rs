@@ -75,6 +75,8 @@ impl Keypair {
             Self::Ecc608(keypair) => keypair.key_tag(),
             #[cfg(feature = "tpm")]
             Self::TPM(keypair) => keypair.key_tag(),
+            #[cfg(feature = "tee")]
+            Self::Tee(keypair) => keypair.key_tag(),
         }
     }
 
@@ -86,6 +88,8 @@ impl Keypair {
             Self::Ecc608(keypair) => &keypair.public_key,
             #[cfg(feature = "tpm")]
             Self::TPM(keypair) => &keypair.public_key,
+            #[cfg(feature = "tee")]
+            Self::Tee(keypair) => &keypair.public_key,
         }
     }
 
@@ -96,6 +100,8 @@ impl Keypair {
             Self::Ecc608(keypair) => Ok(SharedSecret(keypair.ecdh(public_key)?)),
             #[cfg(feature = "tpm")]
             Self::TPM(keypair) => Ok(SharedSecret(keypair.ecdh(public_key)?)),
+            #[cfg(feature = "tee")]
+            Self::Tee(keypair) => Ok(SharedSecret(keypair.ecdh(public_key)?)),
             _ => Err(Error::invalid_curve()),
         }
     }
@@ -108,6 +114,8 @@ impl Keypair {
             Self::Ecc608(_) => panic!("not supported"),
             #[cfg(feature = "tpm")]
             Self::TPM(_) => panic!("not supported"),
+            #[cfg(feature = "tee")]
+            Self::Tee(keypair) => panic!("not supported"),
         }
     }
 
@@ -119,6 +127,8 @@ impl Keypair {
             Self::Ecc608(_) => panic!("not supported"),
             #[cfg(feature = "tpm")]
             Self::TPM(_) => panic!("not supported"),
+            #[cfg(feature = "tee")]
+            Self::Tee(keypair) => panic!("not supported"),
         }
     }
 }
@@ -146,6 +156,13 @@ impl From<ecc608::Keypair> for Keypair {
 impl From<tpm::Keypair> for Keypair {
     fn from(keypair: tpm::Keypair) -> Self {
         Self::TPM(keypair)
+    }
+}
+
+#[cfg(feature = "tee")]
+impl From<tee::Keypair> for Keypair {
+    fn from(keypair: tee::Keypair) -> Self {
+        Self::Tee(keypair)
     }
 }
 

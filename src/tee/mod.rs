@@ -2,8 +2,11 @@ use crate::{
     ecc_compact::{self, Signature},
     keypair, public_key, Error, KeyTag, KeyType as CrateKeyType, Network, Result,
 };
+use p256::{ecdsa, elliptic_curve};
+use std::convert::{TryFrom, TryInto};
 
 pub struct Keypair {
+    pub network: Network,
     pub public_key: public_key::PublicKey,
 }
 
@@ -32,12 +35,34 @@ impl keypair::Sign for Keypair {
 impl signature::Signer<Signature> for Keypair {
     fn try_sign(&self, msg: &[u8]) -> std::result::Result<Signature, signature::Error> {
         let sign_result = iotpi_helium_optee::sign(msg);
-        match result {
+        match sign_result {
             Ok(bytes) => {
                 let signature = ecdsa::Signature::try_from(&bytes[..])?;
                 Ok(Signature(signature))
             }
-            _ => Err(signature::Error::from_source(err)),
+            Err(err) => Err(signature::Error::from_source(err)),
         }
+    }
+}
+
+impl Keypair {
+    pub fn key_tag(&self) -> KeyTag {
+        KeyTag {
+            network: self.network,
+            key_type: CrateKeyType::EccCompact,
+        }
+    }
+
+    pub fn ecdh<'a, C>(&self, public_key: C) -> Result<ecc_compact::SharedSecret>
+    where
+        C: TryInto<&'a ecc_compact::PublicKey, Error = Error>,
+    {
+        use elliptic_curve::sec1::ToEncodedPoint;
+        let key = public_key.try_into()?;
+        let point = key.0.to_encoded_point(false);
+        let shared_secret_bytes = iotpi_helium_optee::ecdh(point.x().unwrap(), point.y().unwrap())?;
+        Ok(ecc_compact::SharedSecret(p256::ecdh::SharedSecret::from(
+            *p256::FieldBytes::from_slice(&shared_secret_bytes),
+        )))
     }
 }
