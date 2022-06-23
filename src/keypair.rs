@@ -17,6 +17,8 @@ pub enum Keypair {
     Ecc608(ecc608::Keypair),
     #[cfg(feature = "tpm")]
     TPM(tpm::Keypair),
+    #[cfg(feature = "tee")]
+    Tee(tee::Keypair),
 }
 
 pub struct SharedSecret(ecc_compact::SharedSecret);
@@ -30,6 +32,8 @@ impl Sign for Keypair {
             Self::Ecc608(keypair) => keypair.sign(msg),
             #[cfg(feature = "tpm")]
             Self::TPM(keypair) => keypair.sign(msg),
+            #[cfg(feature = "tee")]
+            Self::Tee(keypair) => keypair.sign(msg),
         }
     }
 }

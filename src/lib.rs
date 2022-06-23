@@ -30,6 +30,9 @@ pub mod ecc608;
 #[cfg(feature = "tpm")]
 pub mod tpm;
 
+#[cfg(feature = "tee")]
+pub mod tee;
+
 #[cfg(feature = "multisig")]
 pub mod multisig;
 

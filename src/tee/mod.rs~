@@ -1,0 +1,54 @@
+use crate::{
+    ecc_compact::{self, Signature},
+    keypair, public_key, Error, KeyTag, KeyType as CrateKeyType, Network, Result,
+};
+
+pub struct Keypair {
+    pub public_key: public_key::PublicKey,
+}
+
+impl PartialEq for Keypair {
+    fn eq(&self, other: &Self) -> bool {
+        self.public_key == other.public_key
+    }
+}
+
+impl std::fmt::Debug for Keypair {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        f.debug_struct("Keypair")
+            .field("public", &self.public_key)
+            .finish()
+    }
+}
+
+impl keypair::Sign for Keypair {
+    fn sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+        use signature::Signer;
+        let signature = self.try_sign(msg)?;
+        Ok(signature.to_vec())
+    }
+}
+
+impl signature::Signer<Signature> for Keypair {
+    fn try_sign(&self, msg: &[u8]) -> std::result::Result<Signature, signature::Error> {
+        let inbuf = msg as *const ::std::os::raw::c_void;
+        let inlen = msg.len() as size_t;
+        let mut outbuf = [256; 0];
+        let mut outlen: size_t = out.len();
+        let result = unsafe {
+            iotpi_helium_optee::ecdsa_sign(
+                inbuf,
+                inlen,
+                outbuf as *mut ::std::os::raw::c_void,
+                &outlen,
+            );
+        };
+        match sign_result {
+            Ok(bytes) => {
+                let signature = ecdsa::Signature::try_from(&bytes[..])?;
+                Ok(Signature(signature))
+            }
+            Err(err) => Err(signature::Error::from_source(err)),
+        }
+    }
+}
