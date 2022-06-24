@@ -128,7 +128,7 @@ impl Keypair {
             #[cfg(feature = "tpm")]
             Self::TPM(_) => panic!("not supported"),
             #[cfg(feature = "tee")]
-            Self::Tee(keypair) => panic!("not supported"),
+            Self::Tee(_) => panic!("not supported"),
         }
     }
 }

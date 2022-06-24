@@ -31,6 +31,11 @@ pub enum Error {
     #[cfg_attr(docsrs, doc(cfg(feature = "tpm")))]
     #[error("TPM error")]
     TPM(#[from] crate::tpm::Error),
+
+    #[cfg(feature = "tee")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "tee")))]
+    #[error("Tee error")]
+    Tee(#[from] iotpi_helium_optee::Error),
 }
 
 #[derive(Error, Debug)]
