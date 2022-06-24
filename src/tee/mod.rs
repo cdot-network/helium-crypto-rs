@@ -34,7 +34,7 @@ impl keypair::Sign for Keypair {
 
 impl signature::Signer<Signature> for Keypair {
     fn try_sign(&self, msg: &[u8]) -> std::result::Result<Signature, signature::Error> {
-        let sign_result = iotpi_helium_optee::sign(msg);
+        let sign_result = iotpi_helium_optee::ecdsa_sign(msg);
         match sign_result {
             Ok(bytes) => {
                 let signature = ecdsa::Signature::try_from(&bytes[..])?;
