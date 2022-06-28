@@ -60,6 +60,7 @@ impl Keypair {
         use elliptic_curve::sec1::ToEncodedPoint;
         let key = public_key.try_into()?;
         let point = key.0.to_encoded_point(false);
+        println!("point: {:?}", &point);
         let shared_secret_bytes = iotpi_helium_optee::ecdh(point.x().unwrap(), point.y().unwrap())?;
         Ok(ecc_compact::SharedSecret(p256::ecdh::SharedSecret::from(
             *p256::FieldBytes::from_slice(&shared_secret_bytes),

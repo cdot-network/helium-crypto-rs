@@ -191,6 +191,8 @@ mod tests {
     use super::*;
     use rand::rngs::OsRng;
 
+    use std::sync::Once;
+
     fn bytes_roundtrip(key_tag: KeyTag) {
         let keypair = Keypair::generate(key_tag, &mut OsRng);
         let bytes = keypair.to_vec();
@@ -292,5 +294,54 @@ mod tests {
         let keypair = tpm::Keypair::from_key_path(Network::MainNet, "HS/SRK/MinerKey").unwrap();
 
         ecdh_test_keypair(&Keypair::TPM(keypair));
+    }
+
+    #[cfg(feature = "tee")]
+    static INIT: Once = Once::new();
+
+    #[cfg(feature = "tee")]
+    fn tee_setup() {
+        INIT.call_once(|| {
+            iotpi_helium_optee::helium_init();
+        });
+    }
+
+    #[cfg(feature = "tee")]
+    #[test]
+    fn ecdh_tee() {
+        use p256::{
+            self,
+            elliptic_curve::{
+                bigint::Encoding,
+                sec1::{self, FromEncodedPoint, ToCompactEncodedPoint},
+                Curve,
+            },
+            CompressedPoint, EncodedPoint, NistP256, PublicKey,
+        };
+        use std::convert::{From, TryFrom, TryInto};
+
+        tee_setup();
+        let pk = iotpi_helium_optee::ecc_publickey();
+        assert!(pk.is_ok());
+        let pk = pk.unwrap();
+
+        let mut key_bytes = CompressedPoint::default();
+        key_bytes[0] = sec1::Tag::Compact.into();
+        key_bytes[1..(<NistP256 as Curve>::UInt::BYTE_SIZE + 1)].copy_from_slice(&pk.0);
+        // handcoded generated compact_point similar to 'to_compact_encoded_point'
+        // whose execution failed.
+        let compact_point = p256::EncodedPoint::from_bytes(&key_bytes)
+            .map_err(p256::elliptic_curve::Error::from)
+            .expect("cannot encoded point");
+        let pubkey = p256::PublicKey::from_encoded_point(&compact_point).unwrap();
+
+        let ecc_pubkey = ecc_compact::PublicKey(pubkey);
+
+        let keypair_pubkey = public_key::PublicKey::for_network(Network::MainNet, ecc_pubkey);
+        let keypair = tee::Keypair {
+            network: Network::MainNet,
+            public_key: keypair_pubkey,
+        };
+        ecdh_test_keypair(&Keypair::Tee(keypair));
     }
 }
