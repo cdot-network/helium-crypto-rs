@@ -307,8 +307,7 @@ mod tests {
     }
 
     #[cfg(feature = "tee")]
-    #[test]
-    fn ecdh_tee() {
+    fn tee_keypair() -> tee::Keypair {
         use p256::{
             self,
             elliptic_curve::{
@@ -342,6 +341,13 @@ mod tests {
             network: Network::MainNet,
             public_key: keypair_pubkey,
         };
+
+        return keypair;
+    }
+    #[cfg(feature = "tee")]
+    #[test]
+    fn ecdh_tee() {
+        let keypair = tee_keypair();
         ecdh_test_keypair(&Keypair::Tee(keypair));
     }
 }
