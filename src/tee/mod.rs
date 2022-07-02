@@ -3,6 +3,7 @@ use crate::{
     keypair, public_key, Error, KeyTag, KeyType as CrateKeyType, Network, Result,
 };
 use p256::{ecdsa, elliptic_curve};
+use sha2::{Digest, Sha256};
 use std::convert::{TryFrom, TryInto};
 
 pub struct Keypair {
@@ -34,10 +35,12 @@ impl keypair::Sign for Keypair {
 
 impl signature::Signer<Signature> for Keypair {
     fn try_sign(&self, msg: &[u8]) -> std::result::Result<Signature, signature::Error> {
-        let sign_result = iotpi_helium_optee::ecdsa_sign(msg);
+        let digest = Sha256::digest(msg);
+        let sign_result = iotpi_helium_optee::ecdsa_sign_digest(&digest);
         match sign_result {
             Ok(bytes) => {
                 let signature = ecdsa::Signature::try_from(&bytes[..])?;
+                println!("tee signature: {:?}", signature);
                 Ok(Signature(signature))
             }
             Err(err) => Err(signature::Error::from_source(err)),

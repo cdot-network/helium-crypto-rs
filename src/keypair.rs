@@ -323,17 +323,15 @@ mod tests {
         let pk = iotpi_helium_optee::ecc_publickey();
         assert!(pk.is_ok());
         let pk = pk.unwrap();
+        println!("tee pub key({}): {:02x?}", pk.0.len(), pk);
 
-        let mut key_bytes = CompressedPoint::default();
-        key_bytes[0] = sec1::Tag::Compact.into();
+        let mut key_bytes = [0u8; 65];
+        println!("key_bytes: {}", key_bytes.len());
+        key_bytes[0] = sec1::Tag::Uncompressed.into();
         key_bytes[1..(<NistP256 as Curve>::UInt::BYTE_SIZE + 1)].copy_from_slice(&pk.0);
-        // handcoded generated compact_point similar to 'to_compact_encoded_point'
-        // whose execution failed.
-        let compact_point = p256::EncodedPoint::from_bytes(&key_bytes)
-            .map_err(p256::elliptic_curve::Error::from)
-            .expect("cannot encoded point");
-        let pubkey = p256::PublicKey::from_encoded_point(&compact_point).unwrap();
-
+        key_bytes[(<NistP256 as Curve>::UInt::BYTE_SIZE + 1)..].copy_from_slice(&pk.1);
+        let pubkey = p256::PublicKey::from_sec1_bytes(&key_bytes)
+            .expect("failed to convert from sec1_bytes to public key");
         let ecc_pubkey = ecc_compact::PublicKey(pubkey);
 
         let keypair_pubkey = public_key::PublicKey::for_network(Network::MainNet, ecc_pubkey);
@@ -349,5 +347,11 @@ mod tests {
     fn ecdh_tee() {
         let keypair = tee_keypair();
         ecdh_test_keypair(&Keypair::Tee(keypair));
+    }
+    #[cfg(feature = "tee")]
+    #[test]
+    fn sign_tee() {
+        let keypair = tee_keypair();
+        sign_test_keypair(&Keypair::Tee(keypair));
     }
 }
