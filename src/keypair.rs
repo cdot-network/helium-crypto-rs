@@ -296,30 +296,8 @@ mod tests {
 
     #[cfg(feature = "tee")]
     fn tee_keypair() -> tee::Keypair {
-        use p256::{
-            self,
-            elliptic_curve::{
-                bigint::Encoding,
-                sec1::{self, FromEncodedPoint, ToCompactEncodedPoint},
-                Curve,
-            },
-            CompressedPoint, EncodedPoint, NistP256, PublicKey,
-        };
-        use std::convert::{From, TryFrom, TryInto};
-
-        let pk = iotpi_helium_optee::ecc_publickey();
-        assert!(pk.is_ok());
-        let pk = pk.unwrap();
-        println!("tee pub key({}): {:02x?}", pk.0.len(), pk);
-
-        let mut key_bytes = [0u8; 65];
-        println!("key_bytes: {}", key_bytes.len());
-        key_bytes[0] = sec1::Tag::Uncompressed.into();
-        key_bytes[1..(<NistP256 as Curve>::UInt::BYTE_SIZE + 1)].copy_from_slice(&pk.0);
-        key_bytes[(<NistP256 as Curve>::UInt::BYTE_SIZE + 1)..].copy_from_slice(&pk.1);
-        let pubkey = p256::PublicKey::from_sec1_bytes(&key_bytes)
-            .expect("failed to convert from sec1_bytes to public key");
-        let ecc_pubkey = ecc_compact::PublicKey(pubkey);
+        let pubkey = iotpi_helium_optee::publickey();
+        let ecc_pubkey = ecc_compact::PublicKey(pubkey.expect("failed to get tee public key"));
 
         let keypair_pubkey = public_key::PublicKey::for_network(Network::MainNet, ecc_pubkey);
         let keypair = tee::Keypair {
