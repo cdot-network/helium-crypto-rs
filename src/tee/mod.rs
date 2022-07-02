@@ -49,6 +49,19 @@ impl signature::Signer<Signature> for Keypair {
 }
 
 impl Keypair {
+    pub fn keypair() -> Self {
+        let pubkey = iotpi_helium_optee::publickey();
+        let ecc_pubkey = ecc_compact::PublicKey(pubkey.expect("failed to get tee public key"));
+
+        let keypair_pubkey = public_key::PublicKey::for_network(Network::MainNet, ecc_pubkey);
+        let keypair = Keypair {
+            network: Network::MainNet,
+            public_key: keypair_pubkey,
+        };
+
+        return keypair;
+    }
+
     pub fn key_tag(&self) -> KeyTag {
         KeyTag {
             network: self.network,

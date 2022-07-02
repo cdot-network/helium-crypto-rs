@@ -295,28 +295,15 @@ mod tests {
     }
 
     #[cfg(feature = "tee")]
-    fn tee_keypair() -> tee::Keypair {
-        let pubkey = iotpi_helium_optee::publickey();
-        let ecc_pubkey = ecc_compact::PublicKey(pubkey.expect("failed to get tee public key"));
-
-        let keypair_pubkey = public_key::PublicKey::for_network(Network::MainNet, ecc_pubkey);
-        let keypair = tee::Keypair {
-            network: Network::MainNet,
-            public_key: keypair_pubkey,
-        };
-
-        return keypair;
-    }
-    #[cfg(feature = "tee")]
     #[test]
     fn ecdh_tee() {
-        let keypair = tee_keypair();
+        let keypair = crate::tee::Keypair::keypair();
         ecdh_test_keypair(&Keypair::Tee(keypair));
     }
     #[cfg(feature = "tee")]
     #[test]
     fn sign_tee() {
-        let keypair = tee_keypair();
+        let keypair = crate::tee::Keypair::keypair();
         sign_test_keypair(&Keypair::Tee(keypair));
     }
 }
