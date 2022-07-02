@@ -191,8 +191,6 @@ mod tests {
     use super::*;
     use rand::rngs::OsRng;
 
-    use std::sync::Once;
-
     fn bytes_roundtrip(key_tag: KeyTag) {
         let keypair = Keypair::generate(key_tag, &mut OsRng);
         let bytes = keypair.to_vec();
@@ -297,16 +295,6 @@ mod tests {
     }
 
     #[cfg(feature = "tee")]
-    static INIT: Once = Once::new();
-
-    #[cfg(feature = "tee")]
-    fn tee_setup() {
-        INIT.call_once(|| {
-            iotpi_helium_optee::helium_init();
-        });
-    }
-
-    #[cfg(feature = "tee")]
     fn tee_keypair() -> tee::Keypair {
         use p256::{
             self,
@@ -319,7 +307,6 @@ mod tests {
         };
         use std::convert::{From, TryFrom, TryInto};
 
-        tee_setup();
         let pk = iotpi_helium_optee::ecc_publickey();
         assert!(pk.is_ok());
         let pk = pk.unwrap();
