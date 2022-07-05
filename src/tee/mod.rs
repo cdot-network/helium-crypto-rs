@@ -50,13 +50,16 @@ impl signature::Signer<Signature> for Keypair {
 
 impl Keypair {
     pub fn keypair() -> Self {
-        let pubkey = iotpi_helium_optee::publickey();
-        let ecc_pubkey = ecc_compact::PublicKey(pubkey.expect("failed to get tee public key"));
-
-        let keypair_pubkey = public_key::PublicKey::for_network(Network::MainNet, ecc_pubkey);
+        let pubkey = iotpi_helium_optee::publickey().expect("failed to get tee public key");
+        let mut key_bytes = vec![4u8];
+        key_bytes.extend_from_slice(&pubkey.0);
+        key_bytes.extend_from_slice(&pubkey.1);
+        let keypair_pubkey = ecc_compact::PublicKey::try_from(key_bytes.as_ref())
+            .expect("failed to covert to ecc_compact::PublicKey");
+        let public_key = public_key::PublicKey::for_network(Network::MainNet, keypair_pubkey);
         let keypair = Keypair {
             network: Network::MainNet,
-            public_key: keypair_pubkey,
+            public_key,
         };
 
         return keypair;
