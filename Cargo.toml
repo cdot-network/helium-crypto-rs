@@ -22,7 +22,7 @@ lazy_static = "1.4.0"
 libc = {version = "0", optional = true}
 multihash = {version = "0", optional = true}
 
-iotpi-helium-optee = { path = "../helium-optee-rs", optional = true }
+iotpi-helium-optee = { git = "ssh://git@github.com/iotpi-helium/iotpi-helium-optee-rs.git", branch = "master", optional = true }
 
 [features]
 default = []
